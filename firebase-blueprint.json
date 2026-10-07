@@ -1,0 +1,258 @@
+{
+  "entities": {
+    "ProductionLog": {
+      "title": "ProductionLog",
+      "description": "Hourly production UPH log record for Production Line A or Production Line B.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this production log record.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "timeRange": {
+          "type": "string",
+          "description": "Hourly timestamp string in YYYY-MM-DD HH:mm format.",
+          "minLength": 10,
+          "maxLength": 32
+        },
+        "line": {
+          "type": "string",
+          "description": "Manufacturing line identifier.",
+          "enum": ["Production Line A", "Production Line B"],
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "onlineQty": {
+          "type": "number",
+          "description": "Online station completed quantity in this hour."
+        },
+        "offlineQty": {
+          "type": "number",
+          "description": "Offline SFG station completed quantity in this hour."
+        },
+        "targetOnlineQty": {
+          "type": "number",
+          "description": "Target online UPH for this hour."
+        },
+        "targetOfflineQty": {
+          "type": "number",
+          "description": "Target offline UPH for this hour."
+        },
+        "ngQty": {
+          "type": "number",
+          "description": "Defective or NG units recorded in this hour."
+        },
+        "downtimeMinutes": {
+          "type": "number",
+          "description": "Unplanned downtime duration in minutes during this hour."
+        },
+        "shift": {
+          "type": "string",
+          "description": "Production shift identifier.",
+          "enum": ["Day Shift", "Night Shift"],
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "operatorNote": {
+          "type": "string",
+          "description": "Shift supervisor or operator remark for this hourly slot.",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "description": "Computed health status for this hourly record.",
+          "enum": ["Normal", "Warning", "Anomaly"],
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the record was last updated."
+        }
+      },
+      "required": [
+        "ownerId",
+        "timeRange",
+        "line",
+        "onlineQty",
+        "offlineQty",
+        "targetOnlineQty",
+        "targetOfflineQty",
+        "ngQty",
+        "downtimeMinutes",
+        "shift",
+        "operatorNote",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProductionAlert": {
+      "title": "ProductionAlert",
+      "description": "Process anomaly or UPH drop alert for a production line.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this alert record.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "timeRange": {
+          "type": "string",
+          "description": "Hourly slot associated with the anomaly.",
+          "minLength": 10,
+          "maxLength": 32
+        },
+        "line": {
+          "type": "string",
+          "description": "Manufacturing line where the anomaly occurred.",
+          "enum": ["Production Line A", "Production Line B"],
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity level of the alert.",
+          "enum": ["Warning", "Critical"],
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "alertType": {
+          "type": "string",
+          "description": "Category of the manufacturing anomaly.",
+          "enum": ["UPH Drop", "Online-Offline Imbalance", "High Defect Rate", "Machine Downtime"],
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "title": {
+          "type": "string",
+          "description": "Short summary title of the anomaly.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed metrics and threshold explanation.",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "description": "Workflow state of the alert.",
+          "enum": ["Open", "Acknowledged", "Resolved"],
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "rootCause": {
+          "type": "string",
+          "description": "Documented root cause and corrective action.",
+          "maxLength": 300
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the alert was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the alert was last updated."
+        }
+      },
+      "required": [
+        "ownerId",
+        "timeRange",
+        "line",
+        "severity",
+        "alertType",
+        "title",
+        "description",
+        "status",
+        "rootCause",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LineConfig": {
+      "title": "LineConfig",
+      "description": "Target UPH and anomaly threshold configuration for a production line.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who owns this configuration.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "line": {
+          "type": "string",
+          "description": "Manufacturing line name.",
+          "enum": ["Production Line A", "Production Line B"],
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "targetOnlineUph": {
+          "type": "number",
+          "description": "Standard target online UPH."
+        },
+        "targetOfflineUph": {
+          "type": "number",
+          "description": "Standard target offline UPH."
+        },
+        "minOnlineThreshold": {
+          "type": "number",
+          "description": "Minimum online UPH before triggering an anomaly alert."
+        },
+        "minOfflineThreshold": {
+          "type": "number",
+          "description": "Minimum offline UPH before triggering an anomaly alert."
+        },
+        "maxImbalanceGap": {
+          "type": "number",
+          "description": "Maximum allowed difference between online and offline quantity per hour."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the config was last updated."
+        }
+      },
+      "required": [
+        "ownerId",
+        "line",
+        "targetOnlineUph",
+        "targetOfflineUph",
+        "minOnlineThreshold",
+        "minOfflineThreshold",
+        "maxImbalanceGap",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/production_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ProductionLog" },
+      "description": "Stores hourly UPH production records for Line A and Line B."
+    },
+    "/production_alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/ProductionAlert" },
+      "description": "Stores manufacturing process anomaly alerts and resolution logs."
+    },
+    "/line_configs/{configId}": {
+      "schema": { "$ref": "#/entities/LineConfig" },
+      "description": "Stores per-line target UPH and anomaly detection thresholds."
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "UPH Production Telemetry & Daily Summary",
+  "description": "Real-time manufacturing UPH dashboard, hourly production report, Line A/B efficiency analytics, and automated anomaly alert system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

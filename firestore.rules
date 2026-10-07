@@ -1,0 +1,251 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny Catch-All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == "hengkub55555@gmail.com"
+      );
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidProductionLog(data) {
+      return data.keys().hasAll([
+        'ownerId',
+        'timeRange',
+        'line',
+        'onlineQty',
+        'offlineQty',
+        'targetOnlineQty',
+        'targetOfflineQty',
+        'ngQty',
+        'downtimeMinutes',
+        'shift',
+        'operatorNote',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId',
+        'timeRange',
+        'line',
+        'onlineQty',
+        'offlineQty',
+        'targetOnlineQty',
+        'targetOfflineQty',
+        'ngQty',
+        'downtimeMinutes',
+        'shift',
+        'operatorNote',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.timeRange is string && data.timeRange.size() >= 10 && data.timeRange.size() <= 32 &&
+      data.line is string && data.line.size() >= 1 && data.line.size() <= 32 &&
+      (data.line == 'Production Line A' || data.line == 'Production Line B') &&
+      data.onlineQty is number && data.onlineQty >= 0 && data.onlineQty <= 100000 &&
+      data.offlineQty is number && data.offlineQty >= 0 && data.offlineQty <= 100000 &&
+      data.targetOnlineQty is number && data.targetOnlineQty >= 0 && data.targetOnlineQty <= 100000 &&
+      data.targetOfflineQty is number && data.targetOfflineQty >= 0 && data.targetOfflineQty <= 100000 &&
+      data.ngQty is number && data.ngQty >= 0 && data.ngQty <= 100000 &&
+      data.downtimeMinutes is number && data.downtimeMinutes >= 0 && data.downtimeMinutes <= 60 &&
+      data.shift is string && data.shift.size() >= 1 && data.shift.size() <= 24 &&
+      (data.shift == 'Day Shift' || data.shift == 'Night Shift') &&
+      data.operatorNote is string && data.operatorNote.size() <= 500 &&
+      data.status is string && data.status.size() >= 1 && data.status.size() <= 24 &&
+      (data.status == 'Normal' || data.status == 'Warning' || data.status == 'Anomaly') &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidProductionAlert(data) {
+      return data.keys().hasAll([
+        'ownerId',
+        'timeRange',
+        'line',
+        'severity',
+        'alertType',
+        'title',
+        'description',
+        'status',
+        'rootCause',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId',
+        'timeRange',
+        'line',
+        'severity',
+        'alertType',
+        'title',
+        'description',
+        'status',
+        'rootCause',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.timeRange is string && data.timeRange.size() >= 10 && data.timeRange.size() <= 32 &&
+      data.line is string && data.line.size() >= 1 && data.line.size() <= 32 &&
+      (data.line == 'Production Line A' || data.line == 'Production Line B') &&
+      data.severity is string && data.severity.size() >= 1 && data.severity.size() <= 24 &&
+      (data.severity == 'Warning' || data.severity == 'Critical') &&
+      data.alertType is string && data.alertType.size() >= 1 && data.alertType.size() <= 48 &&
+      (data.alertType == 'UPH Drop' || data.alertType == 'Online-Offline Imbalance' || data.alertType == 'High Defect Rate' || data.alertType == 'Machine Downtime') &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+      data.description is string && data.description.size() >= 1 && data.description.size() <= 500 &&
+      data.status is string && data.status.size() >= 1 && data.status.size() <= 24 &&
+      (data.status == 'Open' || data.status == 'Acknowledged' || data.status == 'Resolved') &&
+      data.rootCause is string && data.rootCause.size() <= 300 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidLineConfig(data) {
+      return data.keys().hasAll([
+        'ownerId',
+        'line',
+        'targetOnlineUph',
+        'targetOfflineUph',
+        'minOnlineThreshold',
+        'minOfflineThreshold',
+        'maxImbalanceGap',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId',
+        'line',
+        'targetOnlineUph',
+        'targetOfflineUph',
+        'minOnlineThreshold',
+        'minOfflineThreshold',
+        'maxImbalanceGap',
+        'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.line is string && data.line.size() >= 1 && data.line.size() <= 32 &&
+      (data.line == 'Production Line A' || data.line == 'Production Line B') &&
+      data.targetOnlineUph is number && data.targetOnlineUph >= 1 && data.targetOnlineUph <= 100000 &&
+      data.targetOfflineUph is number && data.targetOfflineUph >= 1 && data.targetOfflineUph <= 100000 &&
+      data.minOnlineThreshold is number && data.minOnlineThreshold >= 0 && data.minOnlineThreshold <= 100000 &&
+      data.minOfflineThreshold is number && data.minOfflineThreshold >= 0 && data.minOfflineThreshold <= 100000 &&
+      data.maxImbalanceGap is number && data.maxImbalanceGap >= 0 && data.maxImbalanceGap <= 100000 &&
+      data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Rules
+    match /admins/{adminId} {
+      allow get: if isVerifiedUser() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list, create, update, delete: if false;
+    }
+
+    match /production_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(logId) && isValidProductionLog(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(logId) && isValidProductionLog(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'timeRange',
+              'line',
+              'onlineQty',
+              'offlineQty',
+              'targetOnlineQty',
+              'targetOfflineQty',
+              'ngQty',
+              'downtimeMinutes',
+              'shift',
+              'operatorNote',
+              'status',
+              'updatedAt'
+            ]))
+        );
+      allow delete: if isVerifiedUser() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /production_alerts/{alertId} {
+      allow get: if isSignedIn() && isValidId(alertId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(alertId) && isValidProductionAlert(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(alertId) && isValidProductionAlert(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            existing().status != 'Resolved' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status',
+              'rootCause',
+              'updatedAt'
+            ]))
+        );
+      allow delete: if isVerifiedUser() && isValidId(alertId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /line_configs/{configId} {
+      allow get: if isSignedIn() && isValidId(configId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(configId) && isValidLineConfig(incoming()) &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(configId) && isValidLineConfig(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().line == existing().line &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'targetOnlineUph',
+              'targetOfflineUph',
+              'minOnlineThreshold',
+              'minOfflineThreshold',
+              'maxImbalanceGap',
+              'updatedAt'
+            ]))
+        );
+      allow delete: if isVerifiedUser() && isValidId(configId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+  }
+}
